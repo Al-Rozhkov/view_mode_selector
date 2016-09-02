@@ -23,21 +23,6 @@ function view_mode_selector_field_info() {
   );
 }
 
-
-/**
- * Implements hook_migrate_api().
- */
-function view_mode_selector_migrate_api() {
-  $api = array(
-    'api' => 2,
-    'field handlers' => array(
-      'MigrateViewModeSelectorValueFieldHandler',
-    ),
-  );
-
-  return $api;
-}
-
 /**
  * Implements hook_field_is_empty().
  */
@@ -71,7 +56,7 @@ function view_mode_selector_field_instance_settings_form($field, $instance) {
         '#attributes' => array('class' => array('view-mode-selector-view-modes')),
         '#attached' => array(
           'css' => array(
-            drupal_get_path('module', 'view_mode_selector') . '/css/view-mode-selector.css',
+            backdrop_get_path('module', 'view_mode_selector') . '/css/view-mode-selector.css',
           ),
         ),
       );
@@ -114,11 +99,6 @@ function view_mode_selector_field_instance_settings_form($field, $instance) {
     }
   }
 
-  // Inform the user about the layout preview feature.
-  if ($instance['widget']['type'] == 'view_mode_selector_radios' && module_exists('ds')) {
-    $form['view_modes']['#description'] = t('It is possible to upload an icon in this widget but when you do not upload an icon a real preview of the view mode is displayed instead.');
-  }
-
   return $form;
 }
 
@@ -152,7 +132,7 @@ function view_mode_selector_field_widget_form(&$form, &$form_state, $field, $ins
     '#default_value' => isset($items[$delta]['value']) ? $items[$delta]['value'] : NULL,
     '#attached' => array(
       'css' => array(
-        drupal_get_path('module', 'view_mode_selector') . '/css/view-mode-selector.css',
+        backdrop_get_path('module', 'view_mode_selector') . '/css/view-mode-selector.css',
       ),
     ),
   );
@@ -173,33 +153,6 @@ function view_mode_selector_field_widget_form(&$form, &$form_state, $field, $ins
     foreach ($view_modes as $view_mode => $view_mode_settings) {
       $label = $view_modes[$view_mode]['label'];
       $element['value']['#options'][$view_mode] = $label;
-    }
-  }
-
-  // Cut out all view modes with Display Suite layouts with regions.
-  if (module_exists('ds')) {
-    $ds_view_modes = array();
-
-    foreach ($element['value']['#options'] as $view_mode => $view_mode_label) {
-      $layout = ds_get_layout($entity_type, $entity_bundle, $view_mode);
-
-      if (!$layout || !isset($layout['settings']['regions'])) {
-        continue;
-      }
-
-      $ds_view_modes[$view_mode] = array(
-        'label' => $element['value']['#options'][$view_mode],
-        'layout' => $layout
-      );
-      unset($element['value']['#options'][$view_mode]);
-    }
-
-    // Sort Display Suite view modes by number of regions.
-    uasort($ds_view_modes, '_view_mode_selector_sort_by_region_count');
-
-    // Append the sorted view modes to the field options.
-    foreach ($ds_view_modes as $view_mode => $ds_view_mode) {
-      $element['value']['#options'][$view_mode] = $ds_view_mode['label'];
     }
   }
 
@@ -224,38 +177,6 @@ function view_mode_selector_field_widget_form(&$form, &$form_state, $field, $ins
             'title' => $view_modes[$view_mode]['label'],
           ),
         ));
-      }
-      // When Display Suite is installed we can show a nice preview.
-      elseif (module_exists('ds') && isset($ds_view_modes[$view_mode])) {
-        $layout = $ds_view_modes[$view_mode]['layout'];
-
-        // Create a new empty entity for the preview.
-        $entity_properties = array('type' => $entity_bundle, 'id' => FALSE);
-        $entity = entity_create($entity_type, $entity_properties);
-        $entity_view = entity_view($entity_type, array($entity), $view_mode);
-
-        // Render one field containing a placeholder <div> in every region.
-        $count = 0;
-        foreach ($layout['settings']['regions'] as $region_settings) {
-          foreach ($region_settings as $field) {
-            $count++;
-            $entity_view[$entity_type][0][$field] = array(
-              '#type' => 'html_tag',
-              '#tag' => 'div',
-              '#value' => $instance['settings']['number_placeholders'] ? $count : '',
-              '#attributes' => array('class' => 'placeholder'),
-              '#field_name' => $field,
-            );
-
-            continue;
-          }
-        }
-
-        // Disable contextual links.
-        $entity_view[$entity_type][0]['#contextual_links'] = FALSE;
-
-        // Render the preview.
-        $output[] = drupal_render($entity_view);
       }
       else {
         $element['value'][$view_mode]['#attributes']['class'][] = 'no-preview';
@@ -359,7 +280,7 @@ function view_mode_selector_entity_view_mode_alter(&$view_mode, $context) {
  * Implements hook_entity_info_alter().
  */
 function view_mode_selector_entity_info_alter(&$entity_info) {
-  $field_infos = field_info_field_map();
+  $field_infos = field_info_fields();
 
   // Create a 'View mode selector' view mode in every bundle.
   foreach ($field_infos as $field_info) {
@@ -379,10 +300,8 @@ function view_mode_selector_entity_info_alter(&$entity_info) {
  */
 function view_mode_selector_form_field_ui_display_overview_form_alter(&$form, &$form_state) {
   if ($form['#view_mode'] == 'view_mode_selector') {
-    drupal_set_message(t('This is a placeholder view mode from the <a href="@view-mode-selector">View Mode Selector</a> module. It will be replaced with a selected view mode.', array(
-      '@view-mode-selector' => url('https://www.drupal.org/project/view_mode_selector'),
-    )), 'status');
-    drupal_set_message(t('Make sure that all fields are visible in order to get access to them.'), 'warning');
+    backdrop_set_message(t('This is a placeholder view mode from the View Mode Selector module. It will be replaced with a selected view mode.'), 'status');
+    backdrop_set_message(t('Make sure that all fields are visible in order to get access to them.'), 'warning');
 
     // @TODO Make all fields visible programmatically.
   }
@@ -413,11 +332,4 @@ function view_mode_selector_view_modes($entity_type) {
   unset($view_modes['view_mode_selector']);
 
   return $view_modes;
-}
-
-/**
- * Sort function to order Display Suite view modes by number of regions.
- */
-function _view_mode_selector_sort_by_region_count($a, $b) {
-  return count($a['layout']['settings']['regions']) - count($b['layout']['settings']['regions']);
 }

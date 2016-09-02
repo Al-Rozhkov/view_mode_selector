@@ -1,28 +1,33 @@
-# Introduction
-
-Current Maintainers:
-
-* [yannickoo](https://www.drupal.org/u/yannickoo)
-* [axe312](https://www.drupal.org/u/axe312)
+View mode selector
+======================
 
 View Mode Selector creates a new field type called *View mode selector* which
 will override the view mode of an entity.
 
-# Installation
+Installation
+------------
 
-1. Install the module the [drupal way](http://drupal.org/documentation/install/modules-themes/modules-7).
+- Install this module using the official Backdrop CMS instructions at
+  https://backdropcms.org/guide/modules
 
-2. Go to *Manage fields* and just select *View mode selector* as field type.
+- This module provides a new field type "View mode selector", so just go to "Manage fields" and create a field of that type and choose between a "select list" and a "radio buttons" widget. When you choose "radio buttons" it is possible to upload an icon which will be displayed instead of the view mode name.
 
-3. Now you can choose between a *Select list* and a *Radio buttons*. BTW the
-*Radio buttons* widget also allows you to upload an icon for a view mode which
-will be used instead of the view mode label in the widget form.
+- In order to display your referenced entities with the new "View mode selector" view mode don't forget to change the view mode on "Manage display" which is used for displaying them.
 
-4. Select view modes that should be provided.
+Issues
+------
 
-5. Create or edit an entity with the field attached and select a view mode.
+Bugs and Feature requests should be reported in the Issue Queue:
+https://github.com/backdrop-contrib/view_mode_selector/issues
 
-# Troubleshooting
+Credits
+-------
 
-When the view mode of an entity did not change as expected a solution could be
-to check which module are implementing the [`hook_entity_view_mode_alter`](https://api.drupal.org/api/drupal/modules!system!system.api.php/function/hook_entity_view_mode_alter/7), maybe another one overrides the view mode after View mode selector did it.
+- Ported to Backdrop CMS by Alexander Rozhkov (https://github.com/Al-Rozhkov).
+- Originally written for Drupal by [yannickoo](https://www.drupal.org/u/yannickoo) and [axe312](https://www.drupal.org/u/axe312).
+
+License
+-------
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for
+complete text.
